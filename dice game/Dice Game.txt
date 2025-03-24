@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>擲骰打怪小遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white;
+            background: url('images/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        .monster { 
+            margin: 10px; padding: 10px; border: 2px solid white; cursor: pointer; display: inline-block; 
+            background: rgba(0, 0, 0, 0.5); 
+        }
+
+        .dice-container, .loot-container { 
+            display: flex; justify-content: center; gap: 10px; margin-top: 20px;
+            position: relative; z-indexL: 10;			
+        }
+
+        .dice, .loot-item { 
+            width: 50px; height: 50px; background: white; color: black; 
+            display: flex; align-items: center; justify-content: center; font-size: 24px; 
+        }
+		.dice-result, .spin-result {
+    background: rgba(0, 0, 0, 0.6); /* 半透明背景 */
+    color: white; /* 讓文字更清楚 */
+    font-size: 24px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 20px;
+    position: relative; /* 確保文字不被背景遮擋 */
+    z-index: 10;
+	    }
+}
+
+        .spin-result { color: red; font-size: 20px; }
+
+        #gameArea, #lootArea { display: none; }
+
+        img { width: 200px; }
+
+        /* 血條 */
+        .health-bar-container {
+            width: 300px;
+            background-color: #333;
+            border-radius: 10px;
+            margin: 10px auto;
+            overflow: hidden;
+            border: 2px solid white;
+        }
+
+        .health-bar {
+            height: 20px;
+            background-color: red;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* 受傷動畫 */
+        .health-text {
+            font-size: 24px;
+            font-weight: bold;
+            transition: color 0.3s ease-in-out;
+        }
+
+        .hurt { color: red !important; animation: flash 0.3s 3; }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>選擇怪物</h1>
+    <div id="monsterSelection">
+        <div class="monster" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="gold.png,potion.png">怪物A (50HP)</div>
+        <div class="monster" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="gem.png,shield.png">怪物B (100HP)</div>
+        <div class="monster" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="sword.png,ring.png">怪物C (150HP)</div>
+        <div class="monster" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png,amulet.png">怪物D (200HP)</div>
+    </div>
+
+    <div id="gameArea">
+        <h2>怪物血量: <span id="monsterHp" class="health-text">0</span></h2>
+        <div class="health-bar-container">
+            <div class="health-bar" id="healthBar"></div>
+        </div>
+        <img id="monsterImage" src="" alt="怪物圖片">
+        <br>
+        <button onclick="rollDice(1)">擲 1 顆骰子</button>
+        <button onclick="rollDice(2)">擲 2 顆骰子</button>
+        <button onclick="rollDice(3)">擲 3 顆骰子</button>
+        <button onclick="rollDice(4)">擲 4 顆骰子</button>
+        
+        <div class="dice-container" id="diceContainer"></div>
+        <p class="dice-result" id="diceResult"></p>
+        <p class="spin-result" id="spinResult"></p>
+    </div>
+
+    <div id="lootArea">
+        <h3>掉落物</h3>
+        <div class="loot-container" id="lootContainer"></div>
+        <button onclick="resetGame()">選擇新的怪物</button>
+    </div>
+
+    <script>
+        let monsterHp = 0;
+        let maxHp = 0;
+        let monsterDrops = [];
+        let monsterImage = "";
+        let deadImage = "";
+
+        document.querySelectorAll(".monster").forEach(monster => {
+            monster.addEventListener("click", function () {
+                maxHp = monsterHp = parseInt(this.getAttribute("data-hp"));
+                monsterImage = this.getAttribute("data-img");
+                deadImage = this.getAttribute("data-dead");
+                monsterDrops = this.getAttribute("data-drop").split(",");
+
+                document.getElementById("monsterHp").innerText = monsterHp;
+                document.getElementById("monsterImage").src = monsterImage;
+                document.getElementById("healthBar").style.width = "100%";
+
+                document.getElementById("monsterSelection").style.display = "none";
+                document.getElementById("gameArea").style.display = "block";
+                document.getElementById("lootArea").style.display = "none"; 
+            });
+        });
+
+        function rollDice(numDice) {
+            let totalDamage = Math.floor(Math.random() * (numDice * 6) + 1);
+            monsterHp = Math.max(0, monsterHp - totalDamage);
+            document.getElementById("monsterHp").innerText = monsterHp;
+
+            let healthPercent = (monsterHp / maxHp) * 100;
+            document.getElementById("healthBar").style.width = healthPercent + "%";
+            document.getElementById("monsterHp").classList.add("hurt");
+
+            setTimeout(() => {
+                document.getElementById("monsterHp").classList.remove("hurt");
+            }, 900);
+
+            if (monsterHp <= 0) {
+                defeatMonster();
+            }
+        }
+
+        function defeatMonster() {
+            document.getElementById("monsterImage").src = deadImage;
+            setTimeout(() => {
+                displayLoot();
+            }, 3000);
+        }
+
+        function displayLoot() {
+            let lootContainer = document.getElementById("lootContainer");
+            lootContainer.innerHTML = "";
+            let lootCount = Math.floor(Math.random() * 3) + 1;
+
+            for (let i = 0; i < lootCount; i++) {
+                let lootItem = document.createElement("img");
+                lootItem.src = `images/${monsterDrops[Math.floor(Math.random() * monsterDrops.length)]}`;
+                lootItem.classList.add("loot-item");
+                lootContainer.appendChild(lootItem);
+            }
+
+            document.getElementById("gameArea").style.display = "none";
+            document.getElementById("lootArea").style.display = "block";
+        }
+
+        function resetGame() {
+            document.getElementById("monsterSelection").style.display = "block";
+            document.getElementById("gameArea").style.display = "none";
+            document.getElementById("lootArea").style.display = "none";
+        }
+    </script>
+</body>
+</html>

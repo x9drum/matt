@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轉盤打怪小遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white;
+            background: url('images/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+        .monster { 
+            margin: 10px; padding: 10px; border: 2px solid white; cursor: pointer; display: inline-block; 
+            background: rgba(0, 0, 0, 0.5); 
+        }
+
+        .spin-result {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        #gameArea, #lootArea { display: none; }
+
+        img { width: 200px; }
+
+        .health-bar-container {
+            width: 300px;
+            background-color: #333;
+            border-radius: 10px;
+            margin: 10px auto;
+            overflow: hidden;
+            border: 2px solid white;
+        }
+
+        .health-bar {
+            height: 20px;
+            background-color: red;
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <h1>選擇怪物</h1>
+    <div id="monsterSelection">
+        <div class="monster" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="gold.png,potion.png">怪物A (50HP)</div>
+        <div class="monster" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="gem.png,shield.png">怪物B (100HP)</div>
+        <div class="monster" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="sword.png,ring.png">怪物C (150HP)</div>
+        <div class="monster" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png,amulet.png">怪物D (200HP)</div>
+    </div>
+
+    <div id="gameArea">
+        <h2>怪物血量: <span id="monsterHp"></span> <span id="damageTaken"></span></h2>
+        <div class="health-bar-container">
+            <div id="healthBar" class="health-bar"></div>
+        </div>
+        <img id="monsterImage">
+        <p id="spinResult" class="spin-result"></p>
+        <button onclick="spinWheel()">開始轉盤</button>
+        <br><br>
+        <label for="damageInput">輸入傷害數字：</label>
+        <input type="number" id="damageInput" min="1" value="0">
+        <button onclick="applyDamage()">造成傷害</button>
+    </div>
+
+    <div id="lootArea">
+        <h2>掉落物</h2>
+        <div class="loot-container" id="lootContainer"></div>
+        <button onclick="restartGame()">返回選擇怪物</button>
+    </div>
+
+<script>
+    let currentMonsterHp = 0;
+    let maxHp = 0;
+    let drops = [];
+    let deadImage = "";
+
+    document.querySelectorAll(".monster").forEach(monster => {
+        monster.addEventListener("click", function() {
+            let hp = parseInt(this.dataset.hp);
+            let img = this.dataset.img;
+            deadImage = this.dataset.dead;
+            drops = this.dataset.drop.split(",");
+            currentMonsterHp = hp;
+            maxHp = hp;
+            document.getElementById("monsterHp").textContent = hp;
+            document.getElementById("damageTaken").textContent = "";
+            document.getElementById("healthBar").style.width = "100%";
+            document.getElementById("monsterImage").src = img;
+            document.getElementById("monsterSelection").style.display = "none";
+            document.getElementById("gameArea").style.display = "block";
+            document.getElementById("lootArea").style.display = "none";
+        });
+    });
+
+    function spinWheel() {
+        let effects = [
+            { text: "骰子+1" },
+            { text: "骰子-1" },
+            { text: "傷害兩倍" },
+            { text: "傷害一半" },
+            { text: "怪物血量+5", effect: () => modifyHp(5) },
+            { text: "怪物血量+10", effect: () => modifyHp(10) },
+            { text: "怪物血量+20", effect: () => modifyHp(20) },
+            { text: "怪物血量-5", effect: () => modifyHp(-5) },
+            { text: "怪物血量-10", effect: () => modifyHp(-10) },
+            { text: "怪物血量-20", effect: () => modifyHp(-20) }
+        ];
+        let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
+        document.getElementById("spinResult").textContent = `輪盤結果: ${chosenEffect.text}`;
+        if (chosenEffect.effect) chosenEffect.effect();
+    }
+
+    function applyDamage() {
+        let damage = parseInt(document.getElementById("damageInput").value) || 0;
+        modifyHp(-damage);
+    }
+
+    function modifyHp(amount) {
+        currentMonsterHp = Math.max(0, currentMonsterHp + amount);
+        document.getElementById("monsterHp").textContent = currentMonsterHp;
+        document.getElementById("healthBar").style.width = (currentMonsterHp / maxHp * 100) + "%";
+        document.getElementById("damageTaken").textContent = amount < 0 ? `(-${Math.abs(amount)})` : `(+${amount})`;
+
+        if (currentMonsterHp <= 0) {
+            document.getElementById("monsterImage").src = deadImage;
+            setTimeout(() => {
+                document.getElementById("gameArea").style.display = "none";
+                document.getElementById("lootArea").style.display = "block";
+                document.getElementById("lootContainer").innerHTML = drops.map(drop => `<img src='images/${drop}'>`).join('');
+            }, 3000);
+        }
+    }
+</script>
+</body>
+</html>
