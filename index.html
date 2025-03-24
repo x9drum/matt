@@ -54,10 +54,10 @@
 <body>
     <h1>選擇怪物</h1>
     <div id="monsterSelection">
-        <div class="monster" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="gold.png,potion.png">怪物A (50HP)</div>
-        <div class="monster" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="gem.png,shield.png">怪物B (100HP)</div>
-        <div class="monster" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="sword.png,ring.png">怪物C (150HP)</div>
-        <div class="monster" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png,amulet.png">怪物D (200HP)</div>
+        <div class="monster" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="gold.png">怪物A (50HP)</div>
+        <div class="monster" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="gem.png">怪物B (100HP)</div>
+        <div class="monster" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="sword.png">怪物C (150HP)</div>
+        <div class="monster" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png">怪物D (200HP)</div>
     </div>
 
     <div id="gameArea">
@@ -138,7 +138,13 @@
             setTimeout(() => {
                 document.getElementById("gameArea").style.display = "none";
                 document.getElementById("lootArea").style.display = "block";
-                document.getElementById("lootContainer").innerHTML = drops.map(drop => `<img src='images/${drop}'>`).join('');
+                let lootHTML = "";
+                let dropItem = drops[Math.floor(Math.random() * drops.length)];
+                let quantity = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < quantity; i++) {
+                    lootHTML += `<img src='images/${dropItem}'>`;
+                }
+                document.getElementById("lootContainer").innerHTML = lootHTML;
             }, 3000);
         }
     }
