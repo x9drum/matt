@@ -119,15 +119,21 @@
     });
 
     function spinWheel() {
-        let effects = ["骰子+1", "骰子-1", "傷害兩倍", "傷害一半", "怪物血量+5", "怪物血量+10", "怪物血量+20", "怪物血量-5", "怪物血量-10", "怪物血量-20"];
-        let spinResultElement = document.getElementById("spinResult");
-        let interval = setInterval(() => {
-            spinResultElement.textContent = `輪盤結果: ${effects[Math.floor(Math.random() * effects.length)]}`;
-        }, 100);
-        setTimeout(() => {
-            clearInterval(interval);
-            spinResultElement.textContent = `輪盤結果: ${effects[Math.floor(Math.random() * effects.length)]}`;
-        }, 3000);
+        let effects = [
+            { text: "骰子+1" },
+            { text: "骰子-1" },
+            { text: "傷害兩倍" },
+            { text: "傷害一半" },
+            { text: "怪物血量+5", effect: () => modifyHp(5) },
+            { text: "怪物血量+10", effect: () => modifyHp(10) },
+            { text: "怪物血量+20", effect: () => modifyHp(20) },
+            { text: "怪物血量-5", effect: () => modifyHp(-5) },
+            { text: "怪物血量-10", effect: () => modifyHp(-10) },
+            { text: "怪物血量-20", effect: () => modifyHp(-20) }
+        ];
+        let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
+        document.getElementById("spinResult").textContent = `輪盤結果: ${chosenEffect.text}`;
+        if (chosenEffect.effect) chosenEffect.effect();
     }
 
     function applyDamage() {
