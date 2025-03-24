@@ -13,16 +13,16 @@
             background-size: cover;
         }
         
-		#selectionGif {
-    text-align: center;
-    margin-bottom: 20px;
-}
+		    #selectionGif {
+                          text-align: center;
+                          margin-bottom: 20px;
+                          }
 
-#selectionGif img {
-    width: 300px; /* 可根據需求調整大小 */
-    height: auto;
-    border-radius: 10px;
-}
+            #selectionGif img {
+                          width: 300px; /* 可根據需求調整大小 */
+                          height: auto;
+                          border-radius: 10px;
+                              }
 
         .monster { 
             margin: 10px; padding: 10px; border: 2px solid white; cursor: pointer; display: inline-block; 
@@ -71,6 +71,139 @@
         .damage-input-container {
             margin-top: 20px;
         }
+		#skillButton {
+                     font-size: 24px;
+                     padding: 15px 30px;
+                     margin-top: 20px;
+                     background-color: orangered;
+                     color: white;
+                     border: none;
+                     border-radius: 10px;
+                     cursor: pointer;
+                     display: block;
+                     width: 80%;
+                     max-width: 400px;
+                     margin: 20px auto;
+                     }
+
+        #skillButton:active {
+                     background-color: darkred;
+                            }
+	#attackButton {
+
+    width: 100px; /* 調整大小 */
+    height: auto;
+    cursor: pointer; /* 讓滑鼠變成點擊手勢 */
+    transition: transform 0.1s ease-in-out;
+}
+
+#attackButton:active {
+    transform: scale(0.9); /* 點擊時縮小一點，增加打擊感 */
+}
+
+#spinButton {
+    width: 120px; /* 調整大小 */
+    height: auto;
+    cursor: pointer; /* 讓滑鼠變成點擊手勢 */
+    transition: transform 0.1s ease-in-out;
+}
+
+#spinButton:active {
+    transform: scale(0.9); /* 點擊時縮小一點，增加手感 */
+}
+
+.icon {
+    width: 30px;  /* 調整大小 */
+    height: auto;
+    vertical-align: middle;  /* 讓圖片跟文字對齊 */
+}
+
+.spin-result {
+    width: 200px; /* 固定大小 */
+    height: 50px; /* 固定高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+.spin-result img {
+    max-width: 40px; /* 限制圖片大小 */
+    max-height: 40px;
+    vertical-align: middle; /* 圖片垂直置中 */
+}
+.spin-container {
+    display: flex;
+    align-items: center;  /* 垂直置中 */
+    justify-content: center; /* 水平置中 */
+    gap: 20px; /* 控制間距 */
+    margin-top: 20px;
+
+     width: fit-content; /* 讓容器寬度剛好適應內容 */
+    margin: 0 auto; /* 讓它水平置中 */
+}
+#spinButton img {
+    width: 80px;  /* 按鈕圖片大小 */
+    height: auto;
+    cursor: pointer;
+}
+
+.monster-container {
+    width: 250px;  /* 固定怪物顯示框的寬度 */
+    height: 250px; /* 固定高度，確保圖片不影響版面 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* 避免溢出 */
+    margin: 0 auto; /* 讓它置中 */
+}
+
+#monsterImage {
+    width: 200px; /* 設定固定寬度 */
+    height: 200px; /* 設定固定高度，確保不變形 */
+    object-fit: contain; /* 確保圖片完整顯示，不拉伸變形 */
+	z-index: 10; /* 比傷害數字低 */
+}
+
+#damageTaken {
+    display: inline-block;
+    width: 100px;  /* 固定寬度，根據最大傷害數字調整 */
+    text-align: center; /* 確保數字居中 */
+    font-size: 20px;
+    color: yellow;
+}
+
+#damageContainer {
+    position: relative;
+    width: 100%;
+    height: 0;
+	z-index: 1000; /* 必須高於怪物 */
+}
+
+.damage-number {
+    position: absolute;
+    font-size: 28px;
+    font-weight: bold;
+    color: yellow;
+    opacity: 1;
+    transform: scale(1);
+    transition: transform 1s ease-out, opacity 1s ease-out;
+    white-space: nowrap;
+    pointer-events: none;
+	z-index: 9999; /* 提高層級 */
+}
+
+.damage-number.animate {
+    opacity: 1;
+    transform: scale(1.5);
+    top: -30px;  /* 讓數字往上移動 */
+}
+
     </style>
 </head>
 <body>
@@ -89,20 +222,38 @@
     </div>
 
     <div id="gameArea">
+
         <h2>怪物血量: <span id="monsterHp"></span></h2>
         <div class="health-bar-container">
             <div id="healthBar" class="health-bar"></div>
         </div>
-        <img id="monsterImage">
+	<div id="damageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+	
+	<div id="monsterContainer" style="position: relative; display: inline-block;">
+    <img id="monsterImage" src="monster_alive.png">
+   
+</div>
         <p id="damageTaken"></p>
-        <p id="spinResult" class="spin-result"></p>
-        <button onclick="spinWheel()">開始轉盤</button>
+		<div class="spin-container">
+		
+              <div id="spinResult" class="spin-result"></div>
+			  
+		<!-- 轉盤按鈕 --> 
+        <img src="images/spin_wheel.png" id="spinButton" onclick="spinWheel()" alt="開始轉盤" title="開始轉盤">
+		
+		      </div>
         <br><br>
+		
         <div class="damage-input-container">
             <label for="damageInput">輸入傷害數字：</label>
             <input type="number" id="damageInput" min="1" value="0">
-            <button onclick="applyDamage()">造成傷害</button>
+            <img src="images/Fire.png" id="attackButton" onclick="applyDamage()" alt="攻擊" title="攻擊">
         </div>
+		
+		<br>
+		<!-- 技能按鈕 -->
+		 <button id="skillButton" onclick="activateSkill()">技能: 快速點擊 (5秒)</button>
+		 
     </div>
 
     <div id="lootArea">
@@ -119,19 +270,25 @@
 	let hitSound = new Audio();
     let deadSound = new Audio();
     let spinSound = new Audio("sounds/spin_result.mp3");
+	let clickCount = 0;
+    let skillActive = false;
+    let skillTimer;
+	let spinCount = 0; // 轉盤次數
+    let skillCooldown = 5; // 技能冷卻所需的轉盤次數
 
-    document.querySelectorAll(".monster").forEach(monster => {
+
+
+  document.querySelectorAll(".monster").forEach(monster => {
     monster.addEventListener("click", function() {
         let hp = parseInt(this.dataset.hp);
-        let img = this.dataset.img;
-        let monsterIndex = [...this.parentElement.children].indexOf(this) + 1; // 取得怪物編號 (1~4)
+        let img = this.dataset.img;  // 活著的怪物圖
+        let monsterIndex = [...this.parentElement.children].indexOf(this) + 1;
 
-        deadImage = this.dataset.dead;
+        deadImage = this.dataset.dead; // 死亡圖
         drops = this.dataset.drop.split(",");
         currentMonsterHp = hp;
         maxHp = hp;
 
-        // 確保音效檔案名稱對應正確的怪物編號
         hitSound.src = `sounds/hit${monsterIndex}.mp3`;
         deadSound.src = `sounds/dead${monsterIndex}.mp3`;
 
@@ -142,79 +299,236 @@
         document.getElementById("monsterSelection").style.display = "none";
         document.getElementById("gameArea").style.display = "block";
         document.getElementById("lootArea").style.display = "none";
+		document.getElementById("monsterImage").src = img; // 確保選擇怪物時顯示正確的圖片
 		
-		// **隱藏 GIF**
+		// 隱藏選擇 GIF
         document.getElementById("selectionGif").style.display = "none";
     });
 });
 
-    function spinWheel() {
+function activateSkill() {
+    if (skillActive || spinCount < skillCooldown) return; // 若技能冷卻則無法使用
+
+    skillActive = true;
+    clickCount = 0;
+    spinCount = 0; // **技能冷卻重置**
+    updateSkillButton();
+    
+    document.getElementById("skillButton").textContent = "🔥 快速點擊中! 🔥";
+    document.getElementById("gameArea").addEventListener("click", countClicks);
+
+    skillTimer = setTimeout(() => {
+        document.getElementById("gameArea").removeEventListener("click", countClicks);
+        document.getElementById("skillButton").textContent = `技能冷卻中 (${skillCooldown} 次轉盤)`;
+        skillActive = false;
+        updateSkillButton();
+    }, 5000);
+}
+
+function countClicks() {
+    if (skillActive) {
+        clickCount++;
+
+        // **立即扣血**
+        modifyHp(-1);
+
+        // **更新 UI**
+        document.getElementById("damageTaken").textContent = `總傷害: ${clickCount}`;
+
+        // **播放受擊音效**
+        hitSound.currentTime = 0;
+        hitSound.play();
+    }
+}
+
+function modifyHp(amount) {
+    console.log("⚡ modifyHp() 被呼叫，傷害值:", amount);
+
+    let damageContainer = document.getElementById("damageContainer");
+    if (!damageContainer) {
+        console.error("❌ Error: damageContainer 不存在！");
+        return;
+    }
+
+    // **更新血量**
+    currentMonsterHp = Math.max(0, Math.min(currentMonsterHp + amount, maxHp));
+    document.getElementById("monsterHp").textContent = currentMonsterHp;
+    document.getElementById("healthBar").style.width = (currentMonsterHp / maxHp * 100) + "%";
+
+    // **🛑 這裡先檢查怪物是否死亡**
+   if (currentMonsterHp <= 0) {
+    let monsterImage = document.getElementById("monsterImage");
+
+    // 找到當前怪物的 `data-dead` 圖片
+    let selectedMonster = document.querySelector(`.monster[data-img="${monsterImage.getAttribute("src")}"]`);
+    
+    if (selectedMonster) {
+        let deadImg = selectedMonster.getAttribute("data-dead"); // 取得死亡圖片
+        console.log("💀 變更為死亡圖片:", deadImg);
+        monsterImage.src = deadImg;
+    } else {
+        console.error("❌ 無法找到對應的死亡圖片！嘗試直接使用 currentMonsterType");
+        monsterImage.src = `images/monster${currentMonsterType}_dead.png`;
+    }
+
+    // 確保圖片顯示變更
+    monsterImage.style.opacity = "1";
+
+    // 播放死亡音效
+    deadSound.play();
+
+        // **3秒後進入掉落物結算**
+        setTimeout(() => {
+            document.getElementById("gameArea").style.display = "none";
+            document.getElementById("lootArea").style.display = "block";
+
+            let lootCount = Math.floor(Math.random() * 3) + 1; // 隨機掉落1~3個
+            document.getElementById("lootContainer").innerHTML = Array.from({ length: lootCount }, () => 
+                `<img src='images/${drops[Math.floor(Math.random() * drops.length)]}'>`
+            ).join('');
+        }, 3000);
+        
+        return; // **怪物死了，就不需要繼續執行傷害動畫**
+    }
+
+    // **傷害動畫 & 震動效果**
+    if (amount !== 0) {
+        let damageText = document.createElement("div");
+        damageText.classList.add("damage-number");
+        damageText.textContent = Math.abs(amount);
+
+        if (amount < 0) {
+            hitSound.currentTime = 0;
+            hitSound.play();
+            shakeMonster(Math.abs(amount)); // 震動效果
+        }
+
+        let monsterImage = document.getElementById("monsterImage");
+        let monsterRect = monsterImage.getBoundingClientRect();
+        let containerRect = damageContainer.getBoundingClientRect();
+
+        let startX = monsterRect.left + monsterRect.width / 2 - containerRect.left;
+        let startY = monsterRect.top + monsterRect.height / 3 - containerRect.top;
+
+        damageText.style.left = `${startX}px`;
+        damageText.style.top = `${startY}px`;
+
+        damageContainer.appendChild(damageText);
+
+        let randomAngle = Math.random() * 2 * Math.PI;
+        let distance = Math.random() * 80 + 40;
+        let offsetX = Math.cos(randomAngle) * distance;
+        let offsetY = Math.sin(randomAngle) * distance;
+
+        setTimeout(() => {
+            damageText.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1.5)`;
+            damageText.style.opacity = "0";
+        }, 10);
+
+        setTimeout(() => {
+            damageText.remove();
+        }, 1500);
+    }
+}
+
+
+    
+
+// **🌀 震動效果**
+function shakeMonster(damage) {
+    let monsterImage = document.getElementById("monsterImage");
+	
+    let intensity = Math.max(3, Math.min(5, damage / 10));
+	// 📌 確保最小震動幅度為 3px，即使只有 -1 HP
+    // 📌 傷害越大，震動越強（最大 5px）
+    let duration = 300; // 震動時間
+
+    monsterImage.style.transition = "transform 0.05s";
+    let frames = [
+        { transform: `translate(${intensity}px, 0px)` },
+        { transform: `translate(-${intensity}px, 0px)` },
+        { transform: `translate(${intensity}px, 0px)` },
+        { transform: `translate(-${intensity}px, 0px)` },
+        { transform: `translate(0px, 0px)` }
+    ];
+
+    monsterImage.animate(frames, { duration: duration, iterations: 1 });
+}
+
+
+
+function spinWheel() {
     let effects = [
-        { text: "骰子+1" },
-        { text: "骰子-1" },
-        { text: "傷害兩倍" },
-        { text: "傷害一半" },
-        { text: "怪物血量+5", effect: () => modifyHp(5) },
-        { text: "怪物血量+10", effect: () => modifyHp(10) },
-        { text: "怪物血量+20", effect: () => modifyHp(20) },
-        { text: "怪物血量-5", effect: () => modifyHp(-5) },
-        { text: "怪物血量-10", effect: () => modifyHp(-10) },
-        { text: "怪物血量-20", effect: () => modifyHp(-20) }
+        { text: '<img src="images/dice.png" class="icon"> +1', effect: () => modifyHp(0) },
+        { text: '<img src="images/dice.png" class="icon"> -1', effect: () => modifyHp(0) },
+        { text: '<img src="images/damage_x2.png" class="icon">', effect: () => applyDamageMultiplier(2) },
+        { text: '<img src="images/damage_half.png" class="icon">', effect: () => applyDamageMultiplier(0.5) },
+        { text: '<img src="images/heart.png" class="icon"> +5', effect: () => modifyHp(5) },
+        { text: '<img src="images/heart.png" class="icon"> +10', effect: () => modifyHp(10) },
+        { text: '<img src="images/heart.png" class="icon"> +20', effect: () => modifyHp(20) },
+        { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5) },
+        { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10) },
+        { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20) }
     ];
 
     let spinResult = document.getElementById("spinResult");
-    let intervalTime = 100; // 初始間隔時間 (毫秒)
-    let duration = 3000; // 旋轉持續時間 (毫秒)
+    let intervalTime = 100; 
+    let duration = 3000; 
     let elapsedTime = 0;
 
     let interval = setInterval(() => {
         let randomEffect = effects[Math.floor(Math.random() * effects.length)];
-        spinResult.textContent = `輪盤轉動中: ${randomEffect.text}`;
+        spinResult.innerHTML = ` ${randomEffect.text}`;
         elapsedTime += intervalTime;
 
         if (elapsedTime >= duration) {
             clearInterval(interval);
             let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
-            spinResult.textContent = `輪盤結果: ${chosenEffect.text}`;
-			
-			 // 播放輪盤音效
+            spinResult.innerHTML = ` ${chosenEffect.text}`;
+
             spinSound.play();
-			
             if (chosenEffect.effect) chosenEffect.effect();
         }
     }, intervalTime);
 }
+
+// 確保 applyDamageMultiplier() 存在
+function applyDamageMultiplier(multiplier) {
+    let damage = parseInt(document.getElementById("damageInput").value) || 0;
+    modifyHp(-damage * multiplier);
+}
+
+
+function updateSkillButton() {
+    let skillButton = document.getElementById("skillButton");
+    
+    if (spinCount < skillCooldown) {
+        skillButton.textContent = `技能冷卻中 (${skillCooldown - spinCount} 次轉盤)`;
+        skillButton.disabled = true;
+        skillButton.style.opacity = "0.5"; // 按鈕變灰
+    } else {
+        skillButton.textContent = "🔥 技能: 快速點擊 (5秒) 🔥";
+        skillButton.disabled = false;
+        skillButton.style.opacity = "1"; // 恢復按鈕
+    }
+}
+
+// **在選擇怪物時重置技能冷卻**
+document.querySelectorAll(".monster").forEach(monster => {
+    monster.addEventListener("click", function() {
+        // 讓技能可用
+        spinCount = skillCooldown; // **確保開場可以使用技能**
+        updateSkillButton();
+    });
+});
 
     function applyDamage() {
         let damage = parseInt(document.getElementById("damageInput").value) || 0;
         modifyHp(-damage);
     }
 
-    function modifyHp(amount) {
-        currentMonsterHp = Math.max(0, currentMonsterHp + amount);
-        document.getElementById("monsterHp").textContent = currentMonsterHp;
-        document.getElementById("healthBar").style.width = (currentMonsterHp / maxHp * 100) + "%";
-        document.getElementById("damageTaken").textContent = amount < 0 ? `(-${Math.abs(amount)})` : `(+${amount})`;
-        
-		if (amount < 0) {
-        // 播放受擊音效
-        hitSound.currentTime = 0; // 讓音效能重複播放
-        hitSound.play();
-    }
+  
 	
-        if (currentMonsterHp <= 0) {
-            document.getElementById("monsterImage").src = deadImage;
-			 // 播放死亡音效
-			 deadSound.play();
-			 
-            setTimeout(() => {
-                document.getElementById("gameArea").style.display = "none";
-                document.getElementById("lootArea").style.display = "block";
-                let lootCount = Math.floor(Math.random() * 3) + 1;
-                document.getElementById("lootContainer").innerHTML = Array.from({ length: lootCount }, () => `<img src='images/${drops[Math.floor(Math.random() * drops.length)]}'>`).join('');
-            }, 3000);
-        }
-    }
 
     function restartGame() {
         document.getElementById("gameArea").style.display = "none";
