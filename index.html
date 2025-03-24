@@ -119,22 +119,37 @@
     });
 
     function spinWheel() {
-        let effects = [
-            { text: "骰子+1" },
-            { text: "骰子-1" },
-            { text: "傷害兩倍" },
-            { text: "傷害一半" },
-            { text: "怪物血量+5", effect: () => modifyHp(5) },
-            { text: "怪物血量+10", effect: () => modifyHp(10) },
-            { text: "怪物血量+20", effect: () => modifyHp(20) },
-            { text: "怪物血量-5", effect: () => modifyHp(-5) },
-            { text: "怪物血量-10", effect: () => modifyHp(-10) },
-            { text: "怪物血量-20", effect: () => modifyHp(-20) }
-        ];
-        let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
-        document.getElementById("spinResult").textContent = `輪盤結果: ${chosenEffect.text}`;
-        if (chosenEffect.effect) chosenEffect.effect();
-    }
+    let effects = [
+        { text: "骰子+1" },
+        { text: "骰子-1" },
+        { text: "傷害兩倍" },
+        { text: "傷害一半" },
+        { text: "怪物血量+5", effect: () => modifyHp(5) },
+        { text: "怪物血量+10", effect: () => modifyHp(10) },
+        { text: "怪物血量+20", effect: () => modifyHp(20) },
+        { text: "怪物血量-5", effect: () => modifyHp(-5) },
+        { text: "怪物血量-10", effect: () => modifyHp(-10) },
+        { text: "怪物血量-20", effect: () => modifyHp(-20) }
+    ];
+
+    let spinResult = document.getElementById("spinResult");
+    let intervalTime = 100; // 初始間隔時間 (毫秒)
+    let duration = 3000; // 旋轉持續時間 (毫秒)
+    let elapsedTime = 0;
+
+    let interval = setInterval(() => {
+        let randomEffect = effects[Math.floor(Math.random() * effects.length)];
+        spinResult.textContent = `輪盤轉動中: ${randomEffect.text}`;
+        elapsedTime += intervalTime;
+
+        if (elapsedTime >= duration) {
+            clearInterval(interval);
+            let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
+            spinResult.textContent = `輪盤結果: ${chosenEffect.text}`;
+            if (chosenEffect.effect) chosenEffect.effect();
+        }
+    }, intervalTime);
+}
 
     function applyDamage() {
         let damage = parseInt(document.getElementById("damageInput").value) || 0;
