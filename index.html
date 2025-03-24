@@ -28,12 +28,12 @@
             display: inline-block;
             margin-top: 20px;
             position: relative;
-            z-index: 10;
+            min-width: 150px;
         }
 
         #gameArea, #lootArea { display: none; }
 
-        img { width: 200px; }
+        img { width: 200px; display: block; margin: 0 auto; }
 
         .health-bar-container {
             width: 300px;
@@ -49,6 +49,17 @@
             background-color: red;
             transition: width 0.5s ease-in-out;
         }
+
+        #damageTaken {
+            display: block;
+            margin-top: 10px;
+            font-size: 20px;
+            color: yellow;
+        }
+
+        .damage-input-container {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -61,17 +72,20 @@
     </div>
 
     <div id="gameArea">
-        <h2>怪物血量: <span id="monsterHp"></span> <span id="damageTaken"></span></h2>
+        <h2>怪物血量: <span id="monsterHp"></span></h2>
         <div class="health-bar-container">
             <div id="healthBar" class="health-bar"></div>
         </div>
         <img id="monsterImage">
+        <p id="damageTaken"></p>
         <p id="spinResult" class="spin-result"></p>
         <button onclick="spinWheel()">開始轉盤</button>
         <br><br>
-        <label for="damageInput">輸入傷害數字：</label>
-        <input type="number" id="damageInput" min="1" value="0">
-        <button onclick="applyDamage()">造成傷害</button>
+        <div class="damage-input-container">
+            <label for="damageInput">輸入傷害數字：</label>
+            <input type="number" id="damageInput" min="1" value="0">
+            <button onclick="applyDamage()">造成傷害</button>
+        </div>
     </div>
 
     <div id="lootArea">
@@ -105,21 +119,15 @@
     });
 
     function spinWheel() {
-        let effects = [
-            { text: "骰子+1" },
-            { text: "骰子-1" },
-            { text: "傷害兩倍" },
-            { text: "傷害一半" },
-            { text: "怪物血量+5", effect: () => modifyHp(5) },
-            { text: "怪物血量+10", effect: () => modifyHp(10) },
-            { text: "怪物血量+20", effect: () => modifyHp(20) },
-            { text: "怪物血量-5", effect: () => modifyHp(-5) },
-            { text: "怪物血量-10", effect: () => modifyHp(-10) },
-            { text: "怪物血量-20", effect: () => modifyHp(-20) }
-        ];
-        let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
-        document.getElementById("spinResult").textContent = `輪盤結果: ${chosenEffect.text}`;
-        if (chosenEffect.effect) chosenEffect.effect();
+        let effects = ["骰子+1", "骰子-1", "傷害兩倍", "傷害一半", "怪物血量+5", "怪物血量+10", "怪物血量+20", "怪物血量-5", "怪物血量-10", "怪物血量-20"];
+        let spinResultElement = document.getElementById("spinResult");
+        let interval = setInterval(() => {
+            spinResultElement.textContent = `輪盤結果: ${effects[Math.floor(Math.random() * effects.length)]}`;
+        }, 100);
+        setTimeout(() => {
+            clearInterval(interval);
+            spinResultElement.textContent = `輪盤結果: ${effects[Math.floor(Math.random() * effects.length)]}`;
+        }, 3000);
     }
 
     function applyDamage() {
@@ -132,21 +140,22 @@
         document.getElementById("monsterHp").textContent = currentMonsterHp;
         document.getElementById("healthBar").style.width = (currentMonsterHp / maxHp * 100) + "%";
         document.getElementById("damageTaken").textContent = amount < 0 ? `(-${Math.abs(amount)})` : `(+${amount})`;
-
+        
         if (currentMonsterHp <= 0) {
             document.getElementById("monsterImage").src = deadImage;
             setTimeout(() => {
                 document.getElementById("gameArea").style.display = "none";
                 document.getElementById("lootArea").style.display = "block";
-                let lootHTML = "";
-                let dropItem = drops[Math.floor(Math.random() * drops.length)];
-                let quantity = Math.floor(Math.random() * 3) + 1;
-                for (let i = 0; i < quantity; i++) {
-                    lootHTML += `<img src='images/${dropItem}'>`;
-                }
-                document.getElementById("lootContainer").innerHTML = lootHTML;
+                let lootCount = Math.floor(Math.random() * 3) + 1;
+                document.getElementById("lootContainer").innerHTML = Array.from({ length: lootCount }, () => `<img src='images/${drops[Math.floor(Math.random() * drops.length)]}'>`).join('');
             }, 3000);
         }
+    }
+
+    function restartGame() {
+        document.getElementById("gameArea").style.display = "none";
+        document.getElementById("lootArea").style.display = "none";
+        document.getElementById("monsterSelection").style.display = "block";
     }
 </script>
 </body>
