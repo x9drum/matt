@@ -13,6 +13,17 @@
             background-size: cover;
         }
         
+		#selectionGif {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#selectionGif img {
+    width: 300px; /* 可根據需求調整大小 */
+    height: auto;
+    border-radius: 10px;
+}
+
         .monster { 
             margin: 10px; padding: 10px; border: 2px solid white; cursor: pointer; display: inline-block; 
             background: rgba(0, 0, 0, 0.5); 
@@ -64,6 +75,12 @@
 </head>
 <body>
     <h1>選擇怪物</h1>
+	
+	 <!-- 加入 GIF 動畫 -->
+    <div id="selectionGif">
+        <img src="images/selection.gif" alt="選擇怪物動畫">
+    </div>
+	
     <div id="monsterSelection">
         <div class="monster" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="gold.png">怪物A (50HP)</div>
         <div class="monster" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="gem.png">怪物B (100HP)</div>
@@ -125,6 +142,9 @@
         document.getElementById("monsterSelection").style.display = "none";
         document.getElementById("gameArea").style.display = "block";
         document.getElementById("lootArea").style.display = "none";
+		
+		// **隱藏 GIF**
+        document.getElementById("selectionGif").style.display = "none";
     });
 });
 
