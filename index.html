@@ -324,9 +324,14 @@
   align-items: center;      /* 垂直置中 */
 }
 
-#questList {
-  text-align: center;
+#questList.closed {
+  display: none;
 }
+
+#questList.open {
+  display: block;
+}
+
 
 .quest-title {
   font-weight: bold;
@@ -391,8 +396,13 @@
 
 	
 	<div id="questPanel">
-  <h2>狩獵任務</h2>
-  <div id="questList"></div>
+  <h2 id="toggleQuestBtn" style="cursor: pointer; user-select: none;">
+  狩獵任務 ▾
+  </h2>
+  
+  <div id="questList" class="closed">
+    <!-- 這裡會由 renderQuests() 動態填入任務項目 -->
+  </div>
 </div>
 	
 	<div id="emeraldDisplay" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: lime; padding: 5px 10px; border-radius: 5px; font-family: 'Microsoft JhengHei', sans-serif;">
@@ -660,23 +670,28 @@ document.querySelectorAll(".monster").forEach(monster => {
     }
 
     // 更新右上任務面板（HTML 中需有 <div id="questList"></div>）
-    function renderQuests() {
+    // 重新渲染任務清單，但不動 questList 的 open/closed class
+function renderQuests() {
   const questList = document.getElementById("questList");
   if (!questList) return;
-  
-  questList.innerHTML = "";
+
+  // 只清空子節點，classList（open/closed）不會被移除
+  while (questList.firstChild) {
+    questList.removeChild(questList.firstChild);
+  }
+
+  // 重新填入任務項目
   activeQuests.forEach(q => {
-    // 建立任務項目容器
     const questItem = document.createElement("div");
     questItem.classList.add("quest-item");
-    
-    // 建立怪物圖片（依據 q.monster，例如 "monster1"）
+
+    // 怪物圖示
     const monsterImg = document.createElement("img");
     monsterImg.src = `images/${q.monster}.png`;
     monsterImg.alt = q.monster;
     monsterImg.classList.add("quest-monster-icon");
-    
-    // 建立進度數字，若任務完成則顯示已完成
+
+    // 進度文字
     const progress = document.createElement("div");
     progress.classList.add("quest-progress");
     if (q.isComplete) {
@@ -684,27 +699,27 @@ document.querySelectorAll(".monster").forEach(monster => {
     } else {
       progress.innerHTML = `<span>${q.current}</span> / <span>${q.required}</span>`;
     }
-    
-    // 將圖片和進度放入任務項目中
+
     questItem.appendChild(monsterImg);
     questItem.appendChild(progress);
     questList.appendChild(questItem);
   });
 }
 
-    // 根據擊敗的怪物更新任務進度
-    function updateQuestProgress(monsterType) {
-      activeQuests.forEach(q => {
-        if (!q.isComplete && q.monster === monsterType) {
-          q.current++;
-          if (q.current >= q.required) {
-            q.isComplete = true;
-            console.log(`任務完成！狩獵怪物 ${q.monster}`);
-          }
-        }
-      });
-      renderQuests();
+// 根據擊敗的怪物更新任務進度，並呼叫 renderQuests()
+function updateQuestProgress(monsterType) {
+  activeQuests.forEach(q => {
+    if (!q.isComplete && q.monster === monsterType) {
+      q.current++;
+      if (q.current >= q.required) {
+        q.isComplete = true;
+        console.log(`任務完成！狩獵怪物 ${q.monster}`);
+      }
     }
+  });
+  renderQuests();
+}
+
 
     // ── 戰鬥相關函式 ──
 
@@ -1120,9 +1135,29 @@ function updateEmeraldDisplay() {
       <span>${emeraldCount}</span>
     `;
   }
+ 
 }
 
 
+</script>
+<script>
+  // 一定要放在其他 script 之後，或包在 DOMContentLoaded 裡
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("toggleQuestBtn");
+    const list = document.getElementById("questList");
+
+    btn.addEventListener("click", () => {
+      // 讀當前顯示狀態
+      const isHidden = list.style.display === "none";
+      if (isHidden) {
+        list.style.display = "block";
+        btn.textContent = "狩獵任務 ▴"; // 向上箭頭
+      } else {
+        list.style.display = "none";
+        btn.textContent = "狩獵任務 ▾"; // 向下箭頭
+      }
+    });
+  });
 </script>
 </body>
 </html>
