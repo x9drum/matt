@@ -42,9 +42,14 @@
             min-width: 150px;
         }
 
-        #gameArea, #lootArea { display: none; }
+        #gameArea,
+#lootArea {
+  display: none;
 
-        img { width: 200px; display: block; margin: 0 auto; }
+  /* 新增底部內距，確保內容不會被道具欄擋住 */
+  padding-bottom: 100px; /* 根據你的道具欄高度＋間距調整 */
+  box-sizing: border-box; /* 確保 padding 不會影響寬度計算 */
+}
 
         .health-bar-container {
             width: 300px;
@@ -53,6 +58,8 @@
             margin: 10px auto;
             overflow: hidden;
             border: 2px solid white;
+			position: relative;  /* 確保可以調整 z-index */
+            z-index: 1000; 
         }
 
         .health-bar {
@@ -84,7 +91,19 @@
                      width: 80%;
                      max-width: 400px;
                      margin: 20px auto;
+					 position: relative;     /* 讓偽元素絕對定位在按鈕周圍 */
+                     z-index: 20;
                      }
+					 #skillButton::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  bottom: -15px;
+  left: -15px;
+  right: -15px;
+  /* 透明但能接收點擊 */
+  background: transparent;
+}
 
         #skillButton:active {
                      background-color: darkred;
@@ -170,6 +189,14 @@
 	z-index: 10; /* 比傷害數字低 */
 }
 
+#monsterImage.boss-large {
+  width: 300px;    /* 想放多大就改這裡 */
+  height: auto;
+  transition: transform 0.3s ease; /* 加點動畫 */
+  transform: scale(1.5);           /* 再放大 1.5 倍 */
+}
+
+
 #damageTaken {
     display: inline-block;
     width: 100px;  /* 固定寬度，根據最大傷害數字調整 */
@@ -184,6 +211,7 @@
     height: 0;
 	z-index: 1000; /* 必須高於怪物 */
 }
+
 
 .damage-number {
     position: absolute;
@@ -316,7 +344,7 @@
 }
 
 .quest-monster-icon {
-  width: 40px;    /* 調整成你想要的大小 */
+  width: 60px;    /* 調整成你想要的大小 */
   height: auto;
   margin-right: 15px;
   text-align: center;
@@ -329,6 +357,13 @@
 .quest-complete {
   color: gold;
   font-weight: bold;
+}
+
+/* 掉落物大小統一限制 */
+#lootContainer img {
+  width: 50px;    /* 想要的大小 */
+  height: auto;
+  margin: 5px;    /* 可選：圖示之間留點空隙 */
 }
 
 
@@ -351,6 +386,7 @@
     <div class="monster" data-monster="monster2" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="emerald.png">怪物B (100HP)</div>
     <div class="monster" data-monster="monster3" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="emerald.png">怪物C (150HP)</div>
     <div class="monster" data-monster="monster4" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png">怪物D (200HP)</div>
+	<div class="monster" data-monster="boss1" data-hp="400" data-img="images/Boss1.png" data-dead="images/Boss1_dead.png" data-drop="Enchanted_Golden_Sword.png">o魔王殭屍 (400HP)</div>
 </div>
 
 	
@@ -438,6 +474,7 @@ let skillActive = false;
 let skillTimer;
 let spinCount = 0; // 轉盤次數
 let skillCooldown = 5; // 技能冷卻所需轉盤次數
+let canSpin = true;
 
 // 新增全域變數來記錄目前戰鬥的怪物類型
 let currentMonsterType = "";
@@ -450,44 +487,57 @@ window.onload = function() {
 
 // ── 怪物點擊事件 ──
 document.querySelectorAll(".monster").forEach(monster => {
-    monster.addEventListener("click", function() {
-        let hp = parseInt(this.dataset.hp);
-        let img = this.dataset.img; // 活著的怪物圖
-        let monsterIndex = [...this.parentElement.children].indexOf(this) + 1;
+  monster.addEventListener("click", function() {
+    let hp = parseInt(this.dataset.hp);
+    let img = this.dataset.img; // 活著的怪物圖
+    let monsterIndex = [...this.parentElement.children].indexOf(this) + 1;
 
-        deadImage = this.dataset.dead; // 死亡圖
-        drops = this.dataset.drop.split(",");
-        currentMonsterHp = hp;
-        maxHp = hp;
-        
-        // 儲存目前怪物類型，請確保你的 HTML 內有 data-monster 屬性
-        currentMonsterType = this.dataset.monster;
+    deadImage = this.dataset.dead; // 死亡圖
+    drops = this.dataset.drop.split(",");
+    currentMonsterHp = hp;
+    maxHp = hp;
 
-        hitSound.src = `sounds/hit${monsterIndex}.mp3`;
-        deadSound.src = `sounds/dead${monsterIndex}.mp3`;
+    // 儲存目前怪物類型
+    currentMonsterType = this.dataset.monster;
 
-        document.getElementById("monsterHp").textContent = hp;
-        document.getElementById("damageTaken").textContent = "";
-        document.getElementById("healthBar").style.width = "100%";
-        document.getElementById("monsterImage").src = img;
-        document.getElementById("monsterSelection").style.display = "none";
-        document.getElementById("gameArea").style.display = "block";
-        document.getElementById("lootArea").style.display = "none";
-        document.getElementById("itemSelection").style.display = "none";
-        document.getElementById("selectionGif").style.display = "none";
+    hitSound.src = `sounds/hit${monsterIndex}.mp3`;
+    deadSound.src = `sounds/dead${monsterIndex}.mp3`;
 
-        // 重置技能冷卻：開場即可使用技能
-        spinCount = skillCooldown;
-        updateSkillButton();
-    });
+    document.getElementById("monsterHp").textContent = hp;
+    document.getElementById("damageTaken").textContent = "";
+    document.getElementById("healthBar").style.width = "100%";
+
+    // 更新怪物圖片
+    const monsterImgEl = document.getElementById("monsterImage");
+    monsterImgEl.src = img;
+
+    // 如果是 boss1，就加上放大用的 class；否則移除
+    if (currentMonsterType === "boss1") {
+      monsterImgEl.classList.add("boss-large");
+    } else {
+      monsterImgEl.classList.remove("boss-large");
+    }
+
+    // 切換畫面
+    document.getElementById("monsterSelection").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+    document.getElementById("lootArea").style.display = "none";
+    document.getElementById("itemSelection").style.display = "none";
+    document.getElementById("selectionGif").style.display = "none";
+
+    // 重置技能冷卻
+    spinCount = skillCooldown;
+    updateSkillButton();
+  });
 });
+
 
     // ── 取得 DOM ──
     const inventorySlots = document.getElementById("inventorySlots");
     const itemGrid = document.getElementById("itemGrid");
 
     const items = [
-        "item1.png", "item2.png", "item3.png", "item4.png", "arrow.png",
+        "item1.png", "item2.png", "item3.png", "item4.png", "Enchanted_Golden_Sword.png",
         "elixir.png", "bomb.png", "fireball.png", "ice_crystal.png", "thunder_scroll.png",
         "hp_up.png", "attack_up.png", "defense_up.png", "speed_boost.png", "revive.png"
     ];
@@ -715,10 +765,16 @@ document.querySelectorAll(".monster").forEach(monster => {
             let damageType = "click";
 
             // 20% 機率檢查技能強化道具 (item2)
-            if (hasItem("item2") && Math.random() < 0.2) {
+            if (hasItem("item2") && Math.random() < 0.5) {
                 console.log("技能強化道具生效！點擊傷害變為 2 點！");
                 damage = -2;
             }
+			
+			if (hasItem("Enchanted_Golden_Sword")) {
+    console.log("🔱 持有強化金劍，點擊傷害 2 點！");
+    damage = -2;
+  }
+  
             
             console.log(`點擊傷害: ${damage}`);
             modifyHp(damage, damageType);
@@ -761,25 +817,36 @@ document.querySelectorAll(".monster").forEach(monster => {
 
     // 怪物死亡處理：更新任務進度並播放死亡動畫
     // ── 怪物死亡處理 ──
+// 怪物死亡處理
 function handleMonsterDeath() {
     const monsterImage = document.getElementById("monsterImage");
-    // 直接使用全域變數 currentMonsterType 來更新任務進度
+
+    // 更新任務進度
     updateQuestProgress(currentMonsterType);
 
-    // 透過 data-img 找出選擇的怪物並取得死亡圖
-    const selectedMonster = document.querySelector(`.monster[data-img="${monsterImage.getAttribute("src")}"]`);
+    // BOSS1 必定掉落 Enchanted_Golden_Sword.png
+    if (currentMonsterType === "boss1") {
+        console.log("💥 BOSS1 死亡，必定掉落 Enchanted_Golden_Sword.png");
+        drops.push("Enchanted_Golden_Sword.png");
+    }
+
+    // 切換到死亡圖片
+    const selectedMonster = document.querySelector(
+      `.monster[data-img="${monsterImage.getAttribute("src")}"]`
+    );
     if (selectedMonster) {
-        let deadImg = selectedMonster.getAttribute("data-dead");
+        const deadImg = selectedMonster.getAttribute("data-dead");
         console.log("變更為死亡圖片:", deadImg);
         monsterImage.src = deadImg;
     } else {
-        console.error("無法找到對應的死亡圖片！");
+        console.error("❌ 無法找到對應的死亡圖片！");
         monsterImage.src = "images/monster_dead.png";
     }
 
-    monsterImage.style.opacity = "1";
     deadSound.play();
+    monsterImage.style.opacity = "1";
 
+    // 延遲進入掉落畫面
     setTimeout(() => {
         document.getElementById("gameArea").style.display = "none";
         document.getElementById("lootArea").style.display = "block";
@@ -787,100 +854,157 @@ function handleMonsterDeath() {
     }, 3000);
 }
 
-    // 掉落物生成，並檢查任務完成情況發放獎勵
-    function generateLoot() {
+
+// 掉落物生成，並檢查任務獎勵＆統計 emerald
+function generateLoot() {
     const lootContainer = document.getElementById("lootContainer");
-    let lootCount = Math.floor(Math.random() * 3) + 1;
-    let lootHTML = "";
+    const lootItems = [];
 
-    for (let i = 0; i < lootCount; i++) {
-        // 隨機選一個掉落物
-        let randomDrop = drops[Math.floor(Math.random() * drops.length)];
-        lootHTML += `<img src="images/${randomDrop}">`;
-
-        // 如果掉落物是 emerald（例如 "emerald.png"），則統計
-        if (randomDrop === "emerald.png") {
-            emeraldCount++; // 每個 emerald 掉落計1
-        }
+    // 1. 根據怪物類型設定固定基礎掉落數量
+    let baseCount;
+    switch (currentMonsterType) {
+      case "monster1": baseCount = 1; break;  // 怪物A
+      case "monster2": baseCount = 2; break;  // 怪物B
+      case "monster3": baseCount = 3; break;  // 怪物C
+      case "monster4": baseCount = 5; break;  // 怪物D
+      case "boss1":    baseCount = 0; break;  // BOSS1 不做隨機掉落
+      default:         baseCount = 0;
     }
-    lootContainer.innerHTML = lootHTML;
 
-    // 檢查任務完成狀態，發放任務獎勵
+    // 2. 非 BOSS1 才做隨機基礎掉落
+    if (baseCount > 0) {
+      for (let i = 0; i < baseCount; i++) {
+        const randomDrop = drops[Math.floor(Math.random() * drops.length)];
+        lootItems.push(randomDrop);
+        // 統計 emerald
+        if (randomDrop === "emerald.png") emeraldCount++;
+      }
+    }
+
+    // 3. BOSS1 必定掉落 1 個 Enchanted_Golden_Sword.png
+    if (currentMonsterType === "boss1") {
+        console.log("💥 BOSS1 死亡，必定掉落 Enchanted_Golden_Sword.png x1");
+        lootItems.push("Enchanted_Golden_Sword.png");
+    }
+
+    // 4. 各怪物額外機率掉落 goldenkey.png
+    const keyChances = {
+      monster1: 0.10,
+      monster2: 0.15,
+      monster3: 0.20,
+      monster4: 0.25,
+      boss1:    0.50
+    };
+    const key = currentMonsterType.toLowerCase();
+    const chance = keyChances[key] || 0;
+    const roll = Math.random();
+    console.log(`🔍 ${currentMonsterType} 掉落金鑰機率 ${chance}，roll=${roll}`);
+    if (roll < chance) {
+        console.log(`🔑 ${currentMonsterType} 額外掉落 goldenkey.png`);
+        lootItems.push("goldenkey.png");
+    }
+
+    // 5. 渲染掉落物
+    lootContainer.innerHTML = lootItems
+      .map(item => `<img src="images/${item}" alt="${item}">`)
+      .join("");
+
+    // 6. 任務獎勵
     activeQuests.forEach(q => {
         if (q.isComplete && !q.rewardGiven) {
             q.rewardGiven = true;
             emeraldCount += q.rewardAmount;
-            
-            let rewardMsg = document.createElement("div");
+            const rewardMsg = document.createElement("div");
             rewardMsg.style.color = "lime";
             rewardMsg.textContent = `獎勵：${q.rewardName} x${q.rewardAmount}`;
             lootContainer.appendChild(rewardMsg);
-            
-            console.log(`獲得任務獎勵：${q.rewardName} x${q.rewardAmount}，目前 emeraldCount = ${emeraldCount}`);
         }
     });
-    
+
+    // 7. 更新右下角 emerald 顯示
     updateEmeraldDisplay();
 }
 
 
+
+
+
+
     // 轉盤邏輯
-    function spinWheel() {
-        let effects;
-        if (hasItem("item3")) {
-            effects = [
-                { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
-                { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
-                { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
-            ];
-        } else {
-            effects = [
-                { text: '<img src="images/dice.png" class="icon"> +1', effect: () => modifyHp(0) },
-                { text: '<img src="images/dice.png" class="icon"> -1', effect: () => modifyHp(0) },
-                { text: '<img src="images/damage_x2.png" class="icon">', effect: () => applyDamageMultiplier(2) },
-                { text: '<img src="images/damage_half.png" class="icon">', effect: () => applyDamageMultiplier(0.5) },
-                { text: '<img src="images/heart.png" class="icon"> +5', effect: () => modifyHp(5) },
-                { text: '<img src="images/heart.png" class="icon"> +10', effect: () => modifyHp(10) },
-                { text: '<img src="images/heart.png" class="icon"> +20', effect: () => modifyHp(20) },
-                { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
-                { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
-                { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
-            ];
-        }
+function spinWheel() {
+    // 如果還在冷卻，就直接忽略點擊
+    if (!canSpin) return;
 
-        let spinResult = document.getElementById("spinResult");
-        let intervalTime = 100;
-        let duration = 3000;
-        let elapsedTime = 0;
+    // 進入冷卻狀態，並暫時關閉按鈕點擊
+    canSpin = false;
+    const btn = document.getElementById("spinButton");
+    btn.style.pointerEvents = "none";
+    btn.style.opacity = 0.5;
 
-        let interval = setInterval(() => {
-            let randomEffect = effects[Math.floor(Math.random() * effects.length)];
-            spinResult.innerHTML = randomEffect.text;
-            elapsedTime += intervalTime;
+    // 2 秒後解除冷卻，恢復按鈕
+    setTimeout(() => {
+        canSpin = true;
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = 1;
+    }, 2000);
 
-            if (elapsedTime >= duration) {
-                clearInterval(interval);
-                let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
-                spinResult.innerHTML = chosenEffect.text;
-                spinSound.play();
-                if (chosenEffect.effect) chosenEffect.effect();
-                spinCount++;
-                updateSkillButton();
-
-                // 判定 item3 額外轉盤效果及消耗一個 item3
-                if (hasItem("item3") && Math.random() < 0.35) {
-                    let slot = document.querySelector(".inventory-slot[data-item='item3']");
-                    if (slot) {
-                        slot.style.backgroundImage = "";
-                        slot.classList.remove("filled");
-                        delete slot.dataset.item;
-                        console.log("item3 消耗一個，額外轉盤");
-                    }
-                    spinWheel();
-                }
-            }
-        }, intervalTime);
+    // 以下是你原本的轉盤邏輯
+    let effects;
+    if (hasItem("item3")) {
+        effects = [
+            { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
+        ];
+    } else {
+        effects = [
+            { text: '<img src="images/dice.png" class="icon"> +1', effect: () => modifyHp(0) },
+            { text: '<img src="images/dice.png" class="icon"> -1', effect: () => modifyHp(0) },
+            { text: '<img src="images/damage_x2.png" class="icon">', effect: () => applyDamageMultiplier(2) },
+            { text: '<img src="images/damage_half.png" class="icon">', effect: () => applyDamageMultiplier(0.5) },
+            { text: '<img src="images/heart.png" class="icon"> +5', effect: () => modifyHp(5) },
+            { text: '<img src="images/heart.png" class="icon"> +10', effect: () => modifyHp(10) },
+            { text: '<img src="images/heart.png" class="icon"> +20', effect: () => modifyHp(20) },
+            { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
+        ];
     }
+
+    let spinResult = document.getElementById("spinResult");
+    let intervalTime = 100;
+    let duration = 3000;
+    let elapsedTime = 0;
+
+    let interval = setInterval(() => {
+        let randomEffect = effects[Math.floor(Math.random() * effects.length)];
+        spinResult.innerHTML = randomEffect.text;
+        elapsedTime += intervalTime;
+
+        if (elapsedTime >= duration) {
+            clearInterval(interval);
+            let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
+            spinResult.innerHTML = chosenEffect.text;
+            spinSound.play();
+            if (chosenEffect.effect) chosenEffect.effect();
+            spinCount++;
+            updateSkillButton();
+
+            // 判定 item3 額外轉盤效果及消耗一個 item3
+            if (hasItem("item3") && Math.random() < 0.35) {
+                let slot = document.querySelector(".inventory-slot[data-item='item3']");
+                if (slot) {
+                    slot.style.backgroundImage = "";
+                    slot.classList.remove("filled");
+                    delete slot.dataset.item;
+                    console.log("item3 消耗一個，額外轉盤");
+                }
+                spinWheel();
+            }
+        }
+    }, intervalTime);
+}
+
 
     // 傷害倍率處理
     function applyDamageMultiplier(multiplier) {
