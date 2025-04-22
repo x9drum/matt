@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轉盤打怪小遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: white;
+            background: url('images/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        
+		    #selectionGif {
+                          text-align: center;
+                          margin-bottom: 20px;
+                          }
+
+            #selectionGif img {
+                          width: 300px; /* 可根據需求調整大小 */
+                          height: auto;
+                          border-radius: 10px;
+                              }
+
+        .monster { 
+            margin: 10px; padding: 10px; border: 2px solid white; cursor: pointer; display: inline-block; 
+            background: rgba(0, 0, 0, 0.5); 
+        }
+
+        .spin-result {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 20px;
+            position: relative;
+            min-width: 150px;
+        }
+
+        #gameArea,
+#lootArea {
+  display: none;
+
+  /* 新增底部內距，確保內容不會被道具欄擋住 */
+  padding-bottom: 100px; /* 根據你的道具欄高度＋間距調整 */
+  box-sizing: border-box; /* 確保 padding 不會影響寬度計算 */
+}
+
+        .health-bar-container {
+            width: 300px;
+            background-color: #333;
+            border-radius: 10px;
+            margin: 10px auto;
+            overflow: hidden;
+            border: 2px solid white;
+			position: relative;  /* 確保可以調整 z-index */
+            z-index: 1000; 
+        }
+
+        .health-bar {
+            height: 20px;
+            background-color: red;
+            transition: width 0.5s ease-in-out;
+        }
+
+        #damageTaken {
+            display: block;
+            margin-top: 10px;
+            font-size: 20px;
+            color: yellow;
+        }
+
+        .damage-input-container {
+            margin-top: 20px;
+        }
+		#skillButton {
+                     font-size: 24px;
+                     padding: 15px 30px;
+                     margin-top: 20px;
+                     background-color: orangered;
+                     color: white;
+                     border: none;
+                     border-radius: 10px;
+                     cursor: pointer;
+                     display: block;
+                     width: 80%;
+                     max-width: 400px;
+                     margin: 20px auto;
+					 position: relative;     /* 讓偽元素絕對定位在按鈕周圍 */
+                     z-index: 20;
+                     }
+					 #skillButton::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  bottom: -15px;
+  left: -15px;
+  right: -15px;
+  /* 透明但能接收點擊 */
+  background: transparent;
+}
+
+        #skillButton:active {
+                     background-color: darkred;
+                            }
+	#attackButton {
+
+    width: 100px; /* 調整大小 */
+    height: auto;
+    cursor: pointer; /* 讓滑鼠變成點擊手勢 */
+    transition: transform 0.1s ease-in-out;
+}
+
+#attackButton:active {
+    transform: scale(0.9); /* 點擊時縮小一點，增加打擊感 */
+}
+
+#spinButton {
+    width: 120px; /* 調整大小 */
+    height: auto;
+    cursor: pointer; /* 讓滑鼠變成點擊手勢 */
+    transition: transform 0.1s ease-in-out;
+}
+
+#spinButton:active {
+    transform: scale(0.9); /* 點擊時縮小一點，增加手感 */
+}
+
+.icon {
+    width: 30px;  /* 調整大小 */
+    height: auto;
+    vertical-align: middle;  /* 讓圖片跟文字對齊 */
+}
+
+.spin-result {
+    width: 200px; /* 固定大小 */
+    height: 50px; /* 固定高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+.spin-result img {
+    max-width: 40px; /* 限制圖片大小 */
+    max-height: 40px;
+    vertical-align: middle; /* 圖片垂直置中 */
+}
+.spin-container {
+    display: flex;
+    align-items: center;  /* 垂直置中 */
+    justify-content: center; /* 水平置中 */
+    gap: 20px; /* 控制間距 */
+    margin-top: 20px;
+
+     width: fit-content; /* 讓容器寬度剛好適應內容 */
+    margin: 0 auto; /* 讓它水平置中 */
+}
+#spinButton img {
+    width: 80px;  /* 按鈕圖片大小 */
+    height: auto;
+    cursor: pointer;
+}
+
+.monster-container {
+    width: 250px;  /* 固定怪物顯示框的寬度 */
+    height: 250px; /* 固定高度，確保圖片不影響版面 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* 避免溢出 */
+    margin: 0 auto; /* 讓它置中 */
+}
+
+#monsterImage {
+    width: 200px; /* 設定固定寬度 */
+    height: 200px; /* 設定固定高度，確保不變形 */
+    object-fit: contain; /* 確保圖片完整顯示，不拉伸變形 */
+	z-index: 10; /* 比傷害數字低 */
+}
+
+#monsterImage.boss-large {
+  width: 300px;    /* 想放多大就改這裡 */
+  height: auto;
+  transition: transform 0.3s ease; /* 加點動畫 */
+  transform: scale(1.5);           /* 再放大 1.5 倍 */
+}
+
+
+#damageTaken {
+    display: inline-block;
+    width: 100px;  /* 固定寬度，根據最大傷害數字調整 */
+    text-align: center; /* 確保數字居中 */
+    font-size: 20px;
+    color: yellow;
+}
+
+#damageContainer {
+    position: relative;
+    width: 100%;
+    height: 0;
+	z-index: 1000; /* 必須高於怪物 */
+}
+
+
+.damage-number {
+    position: absolute;
+    font-size: 28px;
+    font-weight: bold;
+    color: yellow;
+    opacity: 1;
+    transform: scale(1);
+    transition: transform 1s ease-out, opacity 1s ease-out;
+    white-space: nowrap;
+    pointer-events: none;
+	z-index: 9999; /* 提高層級 */
+}
+
+.damage-number.animate {
+    opacity: 1;
+    transform: scale(1.5);
+    top: -30px;  /* 讓數字往上移動 */
+}
+
+#inventory {
+    position: fixed;
+    bottom: 10px; /* 距離畫面底部 10px */
+    left: 50%;
+    transform: translateX(-50%); /* 水平置中 */
+    display: flex;
+    gap: 5px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#inventorySlots {
+    display: flex;
+    justify-content: center; /* 水平置中 */
+    align-items: center; /* 垂直置中（如果有高度限制） */
+    gap: 5px;
+}
+
+.inventory-slot {
+     width: 50px;
+    height: 50px;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid white;
+    position: relative; /* 讓 z-index 生效 */
+    z-index: 10; /* 確保不被其他元素覆蓋 */
+}
+
+#itemGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    width: 290px;
+    height: auto;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid white;
+
+    /* 中間偏下位置 */
+    margin: 20px auto 40px auto; /* 上、左右、下 */
+}
+
+.item {
+    width: 50px;
+    height: 50px;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    border: 2px solid white; /* 每個道具格子加邊框 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.item:hover {
+    background-color: #ddd;
+}
+
+#questPanel {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  width: 180px;
+  padding: 10px;
+  color: #fff;
+  z-index: 999;
+  text-align: center;
+  
+  /* 使用較大的虛擬寬高(如 180x500)，並用 background-size: 100% 100% */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='500'%3E%3Crect width='180' height='500' fill='%23a0522d'/%3E%3Crect x='5' y='5' width='170' height='490' fill='%23deb887' stroke='%23654321' stroke-width='3'/%3E%3C/svg%3E");
+  background-size: 100% 100%; /* 讓背景自動撐滿容器 */
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.quest-item {
+  border: 1px solid #ccc;
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 10px;
+  padding: 5px;
+  border-radius: 5px;
+  justify-content: center;  /* 這行讓內容置中 */
+  width: 100%;              /* 撐滿 #questPanel 的寬度 */
+  align-items: center;      /* 垂直置中 */
+}
+
+#questList.closed {
+  display: none;
+}
+
+#questList.open {
+  display: block;
+}
+
+
+.quest-title {
+  font-weight: bold;
+}
+.quest-complete {
+  color: gold;
+  font-weight: bold;
+}
+
+.emerald-icon {
+  vertical-align: middle;
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.quest-monster-icon {
+  width: 60px;    /* 調整成你想要的大小 */
+  height: auto;
+  margin-right: 15px;
+  text-align: center;
+}
+
+.quest-progress {
+  font-family: "Microsoft JhengHei", sans-serif;
+  color: #fff;
+}
+.quest-complete {
+  color: gold;
+  font-weight: bold;
+}
+
+/* 掉落物大小統一限制 */
+#lootContainer img {
+  width: 50px;    /* 想要的大小 */
+  height: auto;
+  margin: 5px;    /* 可選：圖示之間留點空隙 */
+}
+
+
+  
+  
+
+
+    </style>
+</head>
+<body>
+    <h1>選擇怪物</h1>
+	
+	 <!-- 加入 GIF 動畫 -->
+    <div id="selectionGif">
+        <img src="images/selection.gif" alt="選擇怪物動畫">
+    </div>
+	
+    <div id="monsterSelection">
+    <div class="monster" data-monster="monster1" data-hp="50" data-img="images/monster1.png" data-dead="images/monster1_dead.png" data-drop="emerald.png">怪物A (50HP)</div>
+    <div class="monster" data-monster="monster2" data-hp="100" data-img="images/monster2.png" data-dead="images/monster2_dead.png" data-drop="emerald.png">怪物B (100HP)</div>
+    <div class="monster" data-monster="monster3" data-hp="150" data-img="images/monster3.png" data-dead="images/monster3_dead.png" data-drop="emerald.png">怪物C (150HP)</div>
+    <div class="monster" data-monster="monster4" data-hp="200" data-img="images/monster4.png" data-dead="images/monster4_dead.png" data-drop="helmet.png">怪物D (200HP)</div>
+	<div class="monster" data-monster="boss1" data-hp="400" data-img="images/Boss1.png" data-dead="images/Boss1_dead.png" data-drop="Enchanted_Golden_Sword.png">o魔王殭屍 (400HP)</div>
+</div>
+
+	
+	<div id="questPanel">
+  <h2 id="toggleQuestBtn" style="cursor: pointer; user-select: none;">
+  狩獵任務 ▾
+  </h2>
+  
+  <div id="questList" class="closed">
+    <!-- 這裡會由 renderQuests() 動態填入任務項目 -->
+  </div>
+</div>
+	
+	<div id="emeraldDisplay" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: lime; padding: 5px 10px; border-radius: 5px; font-family: 'Microsoft JhengHei', sans-serif;">
+  Emerald: 0
+</div>
+
+	<div id="menu">
+    <h2>選擇道具</h2>
+    
+    <!-- 道具欄（最多 10 個） -->
+    <div id="inventory">
+        <h3>📦 道具欄</h3>
+        <div id="inventorySlots">
+            <!-- 這裡會動態填充道具 -->
+        </div>
+    </div>
+
+    <!-- 道具選擇區 -->
+    <div id="itemSelection">
+        <h3>🎒 道具選擇</h3>
+        <div id="itemGrid">
+            <!-- 這裡會動態填充 5x5 的道具 -->
+        </div>
+    </div>
+    </div>
+
+    <div id="gameArea">
+
+        <h2>怪物血量: <span id="monsterHp"></span></h2>
+        <div class="health-bar-container">
+            <div id="healthBar" class="health-bar"></div>
+        </div>
+	<div id="damageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+	
+	<div id="monsterContainer" style="position: relative; display: inline-block;">
+    <img id="monsterImage" src="monster_alive.png">
+   
+</div>
+        <p id="damageTaken"></p>
+		<div class="spin-container">
+		
+              <div id="spinResult" class="spin-result"></div>
+			  
+		<!-- 轉盤按鈕 --> 
+        <img src="images/spin_wheel.png" id="spinButton" onclick="spinWheel()" alt="開始轉盤" title="開始轉盤">
+		
+		      </div>
+        <br><br>
+		
+        <div class="damage-input-container">
+            <label for="damageInput">輸入傷害數字：</label>
+            <input type="number" id="damageInput" min="1" value="0">
+            <img src="images/Fire.png" id="attackButton" onclick="applyDamage()" alt="攻擊" title="攻擊">
+        </div>
+		
+		<br>
+		<!-- 技能按鈕 -->
+		 <button id="skillButton" onclick="activateSkill()">技能: 快速點擊 (5秒)</button>
+		 
+    </div>
+
+    <div id="lootArea">
+        <h2>掉落物</h2>
+        <div class="loot-container" id="lootContainer"></div>
+        <button onclick="restartGame()">返回選擇怪物</button>
+    </div>
+
+<script>
+// ── 全域變數宣告 ──
+let currentMonsterHp = 0;
+let maxHp = 0;
+let drops = [];
+let deadImage = "";
+let hitSound = new Audio();
+let deadSound = new Audio();
+let spinSound = new Audio("sounds/spin_result.mp3");
+let clickCount = 0;
+let skillActive = false;
+let skillTimer;
+let spinCount = 0; // 轉盤次數
+let skillCooldown = 5; // 技能冷卻所需轉盤次數
+let canSpin = true;
+
+// 新增全域變數來記錄目前戰鬥的怪物類型
+let currentMonsterType = "";
+
+window.onload = function() {
+  initializeQuests();
+  updateEmeraldDisplay();
+  // ...其他初始化動作
+};
+
+// ── 怪物點擊事件 ──
+document.querySelectorAll(".monster").forEach(monster => {
+  monster.addEventListener("click", function() {
+    let hp = parseInt(this.dataset.hp);
+    let img = this.dataset.img; // 活著的怪物圖
+    let monsterIndex = [...this.parentElement.children].indexOf(this) + 1;
+
+    deadImage = this.dataset.dead; // 死亡圖
+    drops = this.dataset.drop.split(",");
+    currentMonsterHp = hp;
+    maxHp = hp;
+
+    // 儲存目前怪物類型
+    currentMonsterType = this.dataset.monster;
+
+    hitSound.src = `sounds/hit${monsterIndex}.mp3`;
+    deadSound.src = `sounds/dead${monsterIndex}.mp3`;
+
+    document.getElementById("monsterHp").textContent = hp;
+    document.getElementById("damageTaken").textContent = "";
+    document.getElementById("healthBar").style.width = "100%";
+
+    // 更新怪物圖片
+    const monsterImgEl = document.getElementById("monsterImage");
+    monsterImgEl.src = img;
+
+    // 如果是 boss1，就加上放大用的 class；否則移除
+    if (currentMonsterType === "boss1") {
+      monsterImgEl.classList.add("boss-large");
+    } else {
+      monsterImgEl.classList.remove("boss-large");
+    }
+
+    // 切換畫面
+    document.getElementById("monsterSelection").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+    document.getElementById("lootArea").style.display = "none";
+    document.getElementById("itemSelection").style.display = "none";
+    document.getElementById("selectionGif").style.display = "none";
+
+    // 重置技能冷卻
+    spinCount = skillCooldown;
+    updateSkillButton();
+  });
+});
+
+
+    // ── 取得 DOM ──
+    const inventorySlots = document.getElementById("inventorySlots");
+    const itemGrid = document.getElementById("itemGrid");
+
+    const items = [
+        "item1.png", "item2.png", "item3.png", "item4.png", "Enchanted_Golden_Sword.png",
+        "elixir.png", "bomb.png", "fireball.png", "ice_crystal.png", "thunder_scroll.png",
+        "hp_up.png", "attack_up.png", "defense_up.png", "speed_boost.png", "revive.png"
+    ];
+
+    // 生成道具欄（10格）
+    for (let i = 0; i < 10; i++) {
+        let slot = document.createElement("div");
+        slot.classList.add("inventory-slot");
+        slot.dataset.index = i;
+        inventorySlots.appendChild(slot);
+    }
+
+    // 點擊道具欄格子：確認後移除道具
+    document.querySelectorAll(".inventory-slot").forEach(slot => {
+        slot.addEventListener("click", function () {
+            if (slot.classList.contains("filled") && confirm("確定要移除這個道具嗎？")) {
+                slot.style.backgroundImage = "";
+                slot.classList.remove("filled");
+                delete slot.dataset.item;
+            }
+        });
+    });
+
+    // 生成道具選擇區（5x5）
+    items.forEach(item => {
+    let itemElement = document.createElement("div");
+    itemElement.classList.add("item");
+    itemElement.dataset.item = item.replace(".png", "");
+    itemElement.style.backgroundImage = `url(images/${item})`;
+
+    // 點擊道具後加入道具欄的第一個空格
+    itemElement.addEventListener("click", function () {
+        let itemName = item.replace(".png", "");
+
+        // 檢查是否 item3，需要消耗 1 顆 emerald
+        if (itemName === "item3") {
+            if (emeraldCount < 1) {
+                alert("需要一顆綠寶石！");
+                return;
+            } else {
+                // 消耗 1 顆 emerald
+                emeraldCount -= 1;
+                updateEmeraldDisplay(); // 更新右下角顯示
+            }
+        }
+
+        // 尋找第一個空格，放入道具
+        let emptySlot = document.querySelector(".inventory-slot:not(.filled)");
+        if (emptySlot) {
+            emptySlot.style.backgroundImage = `url(images/${item})`;
+            emptySlot.classList.add("filled");
+            emptySlot.dataset.item = itemName;
+        }
+    });
+
+    itemGrid.appendChild(itemElement);
+});
+
+
+    // ── 任務系統相關 ──
+
+    // 全部可能的任務定義（四種任務）
+    const ALL_QUESTS = [
+      {
+        id: 1,
+        monster: "monster1",  // 對應 monster1.png
+        minCount: 1,
+        maxCount: 3,
+        rewardName: "emerald",
+        rewardAmount: 2
+      },
+      {
+        id: 2,
+        monster: "monster2",  // 對應 monster2.png
+        minCount: 1,
+        maxCount: 3,
+        rewardName: "emerald",
+        rewardAmount: 3
+      },
+      {
+        id: 3,
+        monster: "monster3",  // 對應 monster3.png
+        minCount: 1,
+        maxCount: 2,
+        rewardName: "emerald",
+        rewardAmount: 4
+      },
+      {
+        id: 4,
+        monster: "monster4",  // 對應 monster4.png
+        minCount: 1,
+        maxCount: 1,
+        rewardName: "emerald",
+        rewardAmount: 5
+      }
+    ];
+
+    // 當前進行中的任務列表
+    let activeQuests = [];
+
+    // 用來記錄玩家持有的 emerald 數量
+    let emeraldCount = 0;
+
+    // 初始化任務，隨機決定每個任務需求數量，並更新右上任務面板
+    function initializeQuests() {
+      activeQuests = ALL_QUESTS.map(q => {
+        const required = Math.floor(Math.random() * (q.maxCount - q.minCount + 1)) + q.minCount;
+        return {
+          id: q.id,
+          monster: q.monster,
+          required: required,
+          current: 0,
+          isComplete: false,
+          rewardName: q.rewardName,
+          rewardAmount: q.rewardAmount,
+          rewardGiven: false
+        };
+      });
+      renderQuests();
+    }
+
+    // 更新右上任務面板（HTML 中需有 <div id="questList"></div>）
+    // 重新渲染任務清單，但不動 questList 的 open/closed class
+function renderQuests() {
+  const questList = document.getElementById("questList");
+  if (!questList) return;
+
+  // 只清空子節點，classList（open/closed）不會被移除
+  while (questList.firstChild) {
+    questList.removeChild(questList.firstChild);
+  }
+
+  // 重新填入任務項目
+  activeQuests.forEach(q => {
+    const questItem = document.createElement("div");
+    questItem.classList.add("quest-item");
+
+    // 怪物圖示
+    const monsterImg = document.createElement("img");
+    monsterImg.src = `images/${q.monster}.png`;
+    monsterImg.alt = q.monster;
+    monsterImg.classList.add("quest-monster-icon");
+
+    // 進度文字
+    const progress = document.createElement("div");
+    progress.classList.add("quest-progress");
+    if (q.isComplete) {
+      progress.innerHTML = `<span class="quest-complete">已完成</span>`;
+    } else {
+      progress.innerHTML = `<span>${q.current}</span> / <span>${q.required}</span>`;
+    }
+
+    questItem.appendChild(monsterImg);
+    questItem.appendChild(progress);
+    questList.appendChild(questItem);
+  });
+}
+
+// 根據擊敗的怪物更新任務進度，並呼叫 renderQuests()
+function updateQuestProgress(monsterType) {
+  activeQuests.forEach(q => {
+    if (!q.isComplete && q.monster === monsterType) {
+      q.current++;
+      if (q.current >= q.required) {
+        q.isComplete = true;
+        console.log(`任務完成！狩獵怪物 ${q.monster}`);
+      }
+    }
+  });
+  renderQuests();
+}
+
+
+    // ── 戰鬥相關函式 ──
+
+    // 開始戰鬥：切換 UI 並更新任務面板
+    function startBattle() {
+        document.getElementById("gameArea").style.display = "block";
+        document.getElementById("monsterSelection").style.display = "none";
+        document.getElementById("lootArea").style.display = "none";
+        document.getElementById("inventory").style.display = "flex";
+        document.getElementById("itemSelection").style.display = "none";
+        // 確保顯示任務（任務初始化後就會顯示在右上）
+        renderQuests();
+
+        equippedItems = [];
+        document.querySelectorAll(".inventory-slot").forEach(slot => {
+            if (slot.dataset.item) { 
+                equippedItems.push(slot.dataset.item);
+                console.log(`已裝備: ${slot.dataset.item}`);
+            }
+        });
+
+        updateSkillButton();
+    }
+
+    // 重置道具欄（清空所有格子）
+    function resetInventory() {
+        document.querySelectorAll(".inventory-slot").forEach(slot => {
+            slot.style.backgroundImage = "";
+            slot.classList.remove("filled");
+            delete slot.dataset.item;
+        });
+    }
+
+    // 技能：快速點擊
+    function activateSkill() {
+        if (skillActive || spinCount < skillCooldown) return;
+
+        skillActive = true;
+        clickCount = 0;
+        spinCount = 0; // 重置技能冷卻
+        updateSkillButton();
+        
+        document.getElementById("skillButton").textContent = "🔥 快速點擊中! 🔥";
+        document.getElementById("gameArea").addEventListener("click", countClicks);
+
+        skillTimer = setTimeout(() => {
+            document.getElementById("gameArea").removeEventListener("click", countClicks);
+            document.getElementById("skillButton").textContent = `技能冷卻中 (${skillCooldown} 次轉盤)`;
+            skillActive = false;
+            updateSkillButton();
+        }, 5000);
+    }
+
+    function countClicks() {
+        if (skillActive) {
+            clickCount++;
+            let damage = -1;
+            let damageType = "click";
+
+            // 20% 機率檢查技能強化道具 (item2)
+            if (hasItem("item2") && Math.random() < 0.5) {
+                console.log("技能強化道具生效！點擊傷害變為 2 點！");
+                damage = -2;
+            }
+			
+			if (hasItem("Enchanted_Golden_Sword")) {
+    console.log("🔱 持有強化金劍，點擊傷害 2 點！");
+    damage = -2;
+  }
+  
+            
+            console.log(`點擊傷害: ${damage}`);
+            modifyHp(damage, damageType);
+            document.getElementById("damageTaken").textContent = `總傷害: ${clickCount}`;
+            hitSound.currentTime = 0;
+            hitSound.play();
+        }
+    }
+
+    // 修改怪物血量，並執行動畫與音效
+    function modifyHp(amount, damageType) {
+        console.log(`modifyHp() 被呼叫，傷害值: ${amount}, 類型: ${damageType}`);
+
+        const damageContainer = document.getElementById("damageContainer");
+        const monsterHpElement = document.getElementById("monsterHp");
+        const healthBar = document.getElementById("healthBar");
+
+        if (!damageContainer || !monsterHpElement || !healthBar) {
+            console.error("必要的 UI 元素不存在！");
+            return;
+        }
+
+        // 如果擁有 item1，轉盤傷害 -5/-10/-20 時額外 +5 傷害
+        if (damageType === "spin" && hasItem("item1") && [-5, -10, -20].includes(amount)) {
+            console.log(`轉盤強化道具生效，原傷害: ${amount}`);
+            amount -= 5;
+        }
+
+        currentMonsterHp = Math.max(0, Math.min(currentMonsterHp + amount, maxHp));
+        monsterHpElement.textContent = currentMonsterHp;
+        healthBar.style.width = `${(currentMonsterHp / maxHp) * 100}%`;
+
+        if (currentMonsterHp <= 0) {
+            handleMonsterDeath();
+            return;
+        }
+
+        if (amount !== 0) displayDamageEffect(amount);
+    }
+
+    // 怪物死亡處理：更新任務進度並播放死亡動畫
+    // ── 怪物死亡處理 ──
+// 怪物死亡處理
+function handleMonsterDeath() {
+    const monsterImage = document.getElementById("monsterImage");
+
+    // 更新任務進度
+    updateQuestProgress(currentMonsterType);
+
+    // BOSS1 必定掉落 Enchanted_Golden_Sword.png
+    if (currentMonsterType === "boss1") {
+        console.log("💥 BOSS1 死亡，必定掉落 Enchanted_Golden_Sword.png");
+        drops.push("Enchanted_Golden_Sword.png");
+    }
+
+    // 切換到死亡圖片
+    const selectedMonster = document.querySelector(
+      `.monster[data-img="${monsterImage.getAttribute("src")}"]`
+    );
+    if (selectedMonster) {
+        const deadImg = selectedMonster.getAttribute("data-dead");
+        console.log("變更為死亡圖片:", deadImg);
+        monsterImage.src = deadImg;
+    } else {
+        console.error("❌ 無法找到對應的死亡圖片！");
+        monsterImage.src = "images/monster_dead.png";
+    }
+
+    deadSound.play();
+    monsterImage.style.opacity = "1";
+
+    // 延遲進入掉落畫面
+    setTimeout(() => {
+        document.getElementById("gameArea").style.display = "none";
+        document.getElementById("lootArea").style.display = "block";
+        generateLoot();
+    }, 3000);
+}
+
+
+// 掉落物生成，並檢查任務獎勵＆統計 emerald
+function generateLoot() {
+    const lootContainer = document.getElementById("lootContainer");
+    const lootItems = [];
+
+    // 1. 根據怪物類型設定固定基礎掉落數量
+    let baseCount;
+    switch (currentMonsterType) {
+      case "monster1": baseCount = 1; break;  // 怪物A
+      case "monster2": baseCount = 2; break;  // 怪物B
+      case "monster3": baseCount = 3; break;  // 怪物C
+      case "monster4": baseCount = 5; break;  // 怪物D
+      case "boss1":    baseCount = 0; break;  // BOSS1 不做隨機掉落
+      default:         baseCount = 0;
+    }
+
+    // 2. 非 BOSS1 才做隨機基礎掉落
+    if (baseCount > 0) {
+      for (let i = 0; i < baseCount; i++) {
+        const randomDrop = drops[Math.floor(Math.random() * drops.length)];
+        lootItems.push(randomDrop);
+        // 統計 emerald
+        if (randomDrop === "emerald.png") emeraldCount++;
+      }
+    }
+
+    // 3. BOSS1 必定掉落 1 個 Enchanted_Golden_Sword.png
+    if (currentMonsterType === "boss1") {
+        console.log("💥 BOSS1 死亡，必定掉落 Enchanted_Golden_Sword.png x1");
+        lootItems.push("Enchanted_Golden_Sword.png");
+    }
+
+    // 4. 各怪物額外機率掉落 goldenkey.png
+    const keyChances = {
+      monster1: 0.10,
+      monster2: 0.15,
+      monster3: 0.20,
+      monster4: 0.25,
+      boss1:    0.50
+    };
+    const key = currentMonsterType.toLowerCase();
+    const chance = keyChances[key] || 0;
+    const roll = Math.random();
+    console.log(`🔍 ${currentMonsterType} 掉落金鑰機率 ${chance}，roll=${roll}`);
+    if (roll < chance) {
+        console.log(`🔑 ${currentMonsterType} 額外掉落 goldenkey.png`);
+        lootItems.push("goldenkey.png");
+    }
+
+    // 5. 渲染掉落物
+    lootContainer.innerHTML = lootItems
+      .map(item => `<img src="images/${item}" alt="${item}">`)
+      .join("");
+
+    // 6. 任務獎勵
+    activeQuests.forEach(q => {
+        if (q.isComplete && !q.rewardGiven) {
+            q.rewardGiven = true;
+            emeraldCount += q.rewardAmount;
+            const rewardMsg = document.createElement("div");
+            rewardMsg.style.color = "lime";
+            rewardMsg.textContent = `獎勵：${q.rewardName} x${q.rewardAmount}`;
+            lootContainer.appendChild(rewardMsg);
+        }
+    });
+
+    // 7. 更新右下角 emerald 顯示
+    updateEmeraldDisplay();
+}
+
+
+
+
+
+
+    // 轉盤邏輯
+function spinWheel() {
+    // 如果還在冷卻，就直接忽略點擊
+    if (!canSpin) return;
+
+    // 進入冷卻狀態，並暫時關閉按鈕點擊
+    canSpin = false;
+    const btn = document.getElementById("spinButton");
+    btn.style.pointerEvents = "none";
+    btn.style.opacity = 0.5;
+
+    // 2 秒後解除冷卻，恢復按鈕
+    setTimeout(() => {
+        canSpin = true;
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = 1;
+    }, 2000);
+
+    // 以下是你原本的轉盤邏輯
+    let effects;
+    if (hasItem("item3")) {
+        effects = [
+            { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
+        ];
+    } else {
+        effects = [
+            { text: '<img src="images/dice.png" class="icon"> +1', effect: () => modifyHp(0) },
+            { text: '<img src="images/dice.png" class="icon"> -1', effect: () => modifyHp(0) },
+            { text: '<img src="images/damage_x2.png" class="icon">', effect: () => applyDamageMultiplier(2) },
+            { text: '<img src="images/damage_half.png" class="icon">', effect: () => applyDamageMultiplier(0.5) },
+            { text: '<img src="images/heart.png" class="icon"> +5', effect: () => modifyHp(5) },
+            { text: '<img src="images/heart.png" class="icon"> +10', effect: () => modifyHp(10) },
+            { text: '<img src="images/heart.png" class="icon"> +20', effect: () => modifyHp(20) },
+            { text: '<img src="images/heart.png" class="icon"> -5', effect: () => modifyHp(-5, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -10', effect: () => modifyHp(-10, "spin") },
+            { text: '<img src="images/heart.png" class="icon"> -20', effect: () => modifyHp(-20, "spin") }
+        ];
+    }
+
+    let spinResult = document.getElementById("spinResult");
+    let intervalTime = 100;
+    let duration = 3000;
+    let elapsedTime = 0;
+
+    let interval = setInterval(() => {
+        let randomEffect = effects[Math.floor(Math.random() * effects.length)];
+        spinResult.innerHTML = randomEffect.text;
+        elapsedTime += intervalTime;
+
+        if (elapsedTime >= duration) {
+            clearInterval(interval);
+            let chosenEffect = effects[Math.floor(Math.random() * effects.length)];
+            spinResult.innerHTML = chosenEffect.text;
+            spinSound.play();
+            if (chosenEffect.effect) chosenEffect.effect();
+            spinCount++;
+            updateSkillButton();
+
+            // 判定 item3 額外轉盤效果及消耗一個 item3
+            if (hasItem("item3") && Math.random() < 0.35) {
+                let slot = document.querySelector(".inventory-slot[data-item='item3']");
+                if (slot) {
+                    slot.style.backgroundImage = "";
+                    slot.classList.remove("filled");
+                    delete slot.dataset.item;
+                    console.log("item3 消耗一個，額外轉盤");
+                }
+                spinWheel();
+            }
+        }
+    }, intervalTime);
+}
+
+
+    // 傷害倍率處理
+    function applyDamageMultiplier(multiplier) {
+        let damage = parseInt(document.getElementById("damageInput").value) || 0;
+        modifyHp(-damage * multiplier);
+    }
+
+    // 更新技能按鈕狀態
+    function updateSkillButton() {
+        let skillButton = document.getElementById("skillButton");
+        if (spinCount < skillCooldown) {
+            skillButton.textContent = `技能冷卻中 (${skillCooldown - spinCount} 次轉盤)`;
+            skillButton.disabled = true;
+            skillButton.style.opacity = "0.5";
+        } else {
+            skillButton.textContent = "🔥 技能: 快速點擊 (5秒) 🔥";
+            skillButton.disabled = false;
+            skillButton.style.opacity = "1";
+        }
+    }
+
+    // 普通攻擊：根據輸入傷害值扣血，並重置輸入框
+    function applyDamage() {
+        let damage = parseInt(document.getElementById("damageInput").value) || 0;
+        modifyHp(-damage);
+        document.getElementById("damageInput").value = 0;
+    }
+
+    // 傷害效果動畫
+    function displayDamageEffect(amount) {
+        const damageContainer = document.getElementById("damageContainer");
+        const monsterImage = document.getElementById("monsterImage");
+
+        let damageText = document.createElement("div");
+        damageText.classList.add("damage-number");
+        damageText.textContent = Math.abs(amount);
+
+        if (amount < 0) {
+            hitSound.currentTime = 0;
+            hitSound.play();
+            shakeMonster(Math.abs(amount));
+        }
+
+        let monsterRect = monsterImage.getBoundingClientRect();
+        let containerRect = damageContainer.getBoundingClientRect();
+        let startX = monsterRect.left + monsterRect.width / 2 - containerRect.left;
+        let startY = monsterRect.top + monsterRect.height / 3 - containerRect.top;
+        
+        damageText.style.left = `${startX}px`;
+        damageText.style.top = `${startY}px`;
+        damageContainer.appendChild(damageText);
+
+        let randomAngle = Math.random() * 2 * Math.PI;
+        let distance = Math.random() * 80 + 40;
+        let offsetX = Math.cos(randomAngle) * distance;
+        let offsetY = Math.sin(randomAngle) * distance;
+
+        setTimeout(() => {
+            damageText.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1.5)`;
+            damageText.style.opacity = "0";
+        }, 10);
+
+        setTimeout(() => {
+            damageText.remove();
+        }, 1500);
+    }
+
+    // 怪物震動效果
+    function shakeMonster(damage) {
+        let monsterImage = document.getElementById("monsterImage");
+        let intensity = Math.max(3, Math.min(5, damage / 10));
+        let duration = 300;
+        monsterImage.style.transition = "transform 0.05s";
+        let frames = [
+            { transform: `translate(${intensity}px, 0px)` },
+            { transform: `translate(-${intensity}px, 0px)` },
+            { transform: `translate(${intensity}px, 0px)` },
+            { transform: `translate(-${intensity}px, 0px)` },
+            { transform: `translate(0px, 0px)` }
+        ];
+        monsterImage.animate(frames, { duration: duration, iterations: 1 });
+    }
+
+    // 重啟遊戲：僅重置畫面與部份 UI，但保留任務進度與獎勵累計
+    function restartGame() {
+        document.getElementById("gameArea").style.display = "none";
+        document.getElementById("lootArea").style.display = "none";
+        resetInventory();
+        document.getElementById("monsterSelection").style.display = "block";
+        document.getElementById("selectionGif").style.display = "block";
+        document.getElementById("itemSelection").style.display = "block";
+        document.getElementById("damageTaken").textContent = "";
+        document.getElementById("healthBar").style.width = "100%";
+    }
+
+    // ── 檢查是否持有指定道具 ──
+    function hasItem(itemName) {
+        return [...document.querySelectorAll(".inventory-slot")].some(slot => slot.dataset.item === itemName);
+    }
+
+    // ── 初始化：頁面載入時執行 ──
+    window.onload = function() {
+      initializeQuests();
+      // 其他初始化動作……
+    };
+	
+	// 更新右下角 emerald 統計
+function updateEmeraldDisplay() {
+  const emeraldDisplay = document.getElementById("emeraldDisplay");
+  if (emeraldDisplay) {
+    emeraldDisplay.innerHTML = `
+      <img src="images/emerald.png" alt="emerald" class="emerald-icon">
+      <span>${emeraldCount}</span>
+    `;
+  }
+ 
+}
+
+
+</script>
+<script>
+  // 一定要放在其他 script 之後，或包在 DOMContentLoaded 裡
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("toggleQuestBtn");
+    const list = document.getElementById("questList");
+
+    btn.addEventListener("click", () => {
+      // 讀當前顯示狀態
+      const isHidden = list.style.display === "none";
+      if (isHidden) {
+        list.style.display = "block";
+        btn.textContent = "狩獵任務 ▴"; // 向上箭頭
+      } else {
+        list.style.display = "none";
+        btn.textContent = "狩獵任務 ▾"; // 向下箭頭
+      }
+    });
+  });
+</script>
+</body>
+</html>
